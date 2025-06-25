@@ -67,6 +67,32 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
         return interviewScheduleRepository.findById(id)
                 .map(existingSchedule -> {
                     schedule.setId(id);
+
+                    // Update Google Calendar event if eventId exists
+                    if (existingSchedule.getCalendarEventId() != null) {
+                        String emailId = schedule.getCandidateInfo().getEmail();
+                        List<String> interviewerEmails = schedule.getInterviewersInfo() != null ?
+                            schedule.getInterviewersInfo().stream()
+                                .map(interviewer -> interviewer.getEmailId())
+                                .toList() : List.of();
+                        List<String> emailList = new java.util.ArrayList<>();
+                        emailList.add(emailId);
+                        emailList.addAll(interviewerEmails);
+
+                        try {
+                            googleCalendarService.updateEvent(
+                                existingSchedule.getCalendarEventId(),
+                                "Interview with " + schedule.getCandidateInfo().getName(),
+                                "Interview for " + schedule.getCandidateInfo().getPosition() + " position",
+                                LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getStartTime()),
+                                LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getEndTime()),
+                                emailList
+                            );
+                        } catch (IOException e) {
+                            throw new RuntimeException("Failed to update Google Calendar event: " + e.getMessage(), e);
+                        }
+                    }
+
                     return interviewScheduleRepository.save(schedule);
                 })
                 .orElseThrow(() -> new IllegalArgumentException("Interview not found with id: " + id));
