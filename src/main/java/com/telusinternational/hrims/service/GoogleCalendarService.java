@@ -96,4 +96,63 @@ public class GoogleCalendarService {
 
         return createdEvent.getHtmlLink();
     }
+
+    public Event createInterviewEventAndReturnEvent(String summary, String description, LocalDateTime startDateTime,
+                                                   LocalDateTime endDateTime, List<String> attendees) throws IOException {
+        final NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        } catch (GeneralSecurityException e) {
+            throw new IOException("Failed to initialize HTTP transport", e);
+        }
+        Credential credentials = getCredentials();
+
+        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+
+        Event event = new Event()
+                .setSummary(summary)
+                .setDescription(description);
+
+        EventDateTime start = new EventDateTime()
+                .setDateTime(new DateTime(
+                        startDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+        event.setStart(start);
+
+        EventDateTime end = new EventDateTime()
+                .setDateTime(new DateTime(
+                        endDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+        event.setEnd(end);
+
+        List<EventAttendee> eventAttendees = attendees.stream()
+                .map(email -> new EventAttendee().setEmail(email))
+                .toList();
+        event.setAttendees(eventAttendees);
+
+        Event createdEvent = null;
+        try {
+            createdEvent = service.events().insert(calendarId, event)
+                    .setSendUpdates("all")
+                    .execute();
+        } catch (IOException e) {
+            System.out.println("Failed to insert event: " + e.getMessage());
+            throw e;
+        }
+
+        return createdEvent;
+    }
+
+    public void deleteEvent(String eventId) {
+        try {
+            final NetHttpTransport HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+            Credential credentials = getCredentials();
+            Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
+                    .setApplicationName(APPLICATION_NAME)
+                    .build();
+            service.events().delete(calendarId, eventId).execute();
+        } catch (Exception e) {
+            System.out.println("Failed to delete event from Google Calendar: " + e.getMessage());
+        }
+    }
 } 

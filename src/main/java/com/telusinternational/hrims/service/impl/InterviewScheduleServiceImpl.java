@@ -38,18 +38,20 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
             emailList.add(emailId);
             emailList.addAll(interviewerEmails);
 
-            String calendarLink = googleCalendarService.createInterviewEvent(
+            // Create event and get the Event object
+            com.google.api.services.calendar.model.Event createdEvent = googleCalendarService.createInterviewEventAndReturnEvent(
                 "Interview with " + schedule.getCandidateInfo().getName(),
                 "Interview for " + schedule.getCandidateInfo().getPosition() + " position",
                 LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getStartTime()),
                 LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getEndTime()),
-                    emailList
+                emailList
             );
 
             // Save the schedule
-            schedule.setCalendarLink(calendarLink);
+            schedule.setCalendarLink(createdEvent.getHtmlLink());
+            schedule.setCalendarEventId(createdEvent.getId());
             return interviewScheduleRepository.save(schedule);
-        } catch (IOException | GeneralSecurityException e) {
+        } catch (IOException e) {
             throw new RuntimeException("Failed to create Google Calendar event: " + e.getMessage(), e);
         }
     }
@@ -72,8 +74,11 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
 
     @Override
     public void deleteInterview(Long id) {
-        if (!interviewScheduleRepository.existsById(id)) {
-            throw new IllegalArgumentException("Interview not found with id: " + id);
+        InterviewSchedule schedule = interviewScheduleRepository.findById(id)
+            .orElseThrow(() -> new IllegalArgumentException("Interview not found with id: " + id));
+        // Delete from Google Calendar
+        if (schedule.getCalendarEventId() != null) {
+            googleCalendarService.deleteEvent(schedule.getCalendarEventId());
         }
         interviewScheduleRepository.deleteById(id);
     }

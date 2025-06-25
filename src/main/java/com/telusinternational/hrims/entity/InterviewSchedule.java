@@ -35,6 +35,7 @@ public class InterviewSchedule {
     private CalendarInfo calendarInfo;
     
     private String calendarLink;
+    private String calendarEventId;
     
     @Embeddable
     @Data

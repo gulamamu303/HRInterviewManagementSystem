@@ -5,7 +5,6 @@ com\telusinternational\hrims\service\OAuthTokenService.class
 com\telusinternational\hrims\entity\InterviewSchedule.class
 com\telusinternational\hrims\repository\CandidateRepository.class
 com\telusinternational\hrims\repository\TechnologyRepository.class
-com\telusinternational\hrims\service\impl\InterviewScheduleServiceImpl.class
 com\telusinternational\hrims\config\OAuth2Config.class
 com\telusinternational\hrims\entity\Candidate.class
 com\telusinternational\hrims\service\CandidateService.class
