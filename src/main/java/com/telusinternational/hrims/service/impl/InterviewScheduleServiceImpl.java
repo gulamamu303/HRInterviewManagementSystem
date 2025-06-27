@@ -68,6 +68,9 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
                 .map(existingSchedule -> {
                     schedule.setId(id);
 
+                    // Preserve the calendarEventId
+                    schedule.setCalendarEventId(existingSchedule.getCalendarEventId());
+
                     // Update Google Calendar event if eventId exists
                     if (existingSchedule.getCalendarEventId() != null) {
                         String emailId = schedule.getCandidateInfo().getEmail();
@@ -80,17 +83,23 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
                         emailList.addAll(interviewerEmails);
 
                         try {
-                            googleCalendarService.updateEvent(
-                                existingSchedule.getCalendarEventId(),
-                                "Interview with " + schedule.getCandidateInfo().getName(),
-                                "Interview for " + schedule.getCandidateInfo().getPosition() + " position",
-                                LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getStartTime()),
-                                LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getEndTime()),
-                                emailList
-                            );
+                            com.google.api.services.calendar.model.Event updatedEvent =
+                                googleCalendarService.updateEventAndReturn(
+                                    existingSchedule.getCalendarEventId(),
+                                    "Interview with " + schedule.getCandidateInfo().getName(),
+                                    "Interview for " + schedule.getCandidateInfo().getPosition() + " position",
+                                    LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getStartTime()),
+                                    LocalDateTime.of(schedule.getCalendarInfo().getDate(), schedule.getCalendarInfo().getEndTime()),
+                                    emailList
+                                );
+                            // Update the calendarLink with the latest value
+                            schedule.setCalendarLink(updatedEvent.getHtmlLink());
                         } catch (IOException e) {
                             throw new RuntimeException("Failed to update Google Calendar event: " + e.getMessage(), e);
                         }
+                    } else {
+                        // If no eventId, preserve the existing link
+                        schedule.setCalendarLink(existingSchedule.getCalendarLink());
                     }
 
                     return interviewScheduleRepository.save(schedule);

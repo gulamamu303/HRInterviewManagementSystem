@@ -190,4 +190,40 @@ public class GoogleCalendarService {
                 .setSendUpdates("all")
                 .execute();
     }
+
+    public Event updateEventAndReturn(String eventId, String summary, String description, LocalDateTime startDateTime, LocalDateTime endDateTime, List<String> attendees) throws IOException {
+        final NetHttpTransport HTTP_TRANSPORT;
+        try {
+            HTTP_TRANSPORT = GoogleNetHttpTransport.newTrustedTransport();
+        } catch (GeneralSecurityException e) {
+            throw new IOException("Failed to initialize HTTP transport", e);
+        }
+        Credential credentials = getCredentials();
+
+        Calendar service = new Calendar.Builder(HTTP_TRANSPORT, JSON_FACTORY, credentials)
+                .setApplicationName(APPLICATION_NAME)
+                .build();
+
+        Event event = service.events().get(calendarId, eventId).execute();
+        event.setSummary(summary);
+        event.setDescription(description);
+
+        EventDateTime start = new EventDateTime()
+                .setDateTime(new DateTime(startDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+        event.setStart(start);
+
+        EventDateTime end = new EventDateTime()
+                .setDateTime(new DateTime(endDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()));
+        event.setEnd(end);
+
+        List<EventAttendee> eventAttendees = attendees.stream()
+                .map(email -> new EventAttendee().setEmail(email))
+                .toList();
+        event.setAttendees(eventAttendees);
+
+        Event updatedEvent = service.events().update(calendarId, eventId, event)
+                .setSendUpdates("all")
+                .execute();
+        return updatedEvent;
+    }
 } 
