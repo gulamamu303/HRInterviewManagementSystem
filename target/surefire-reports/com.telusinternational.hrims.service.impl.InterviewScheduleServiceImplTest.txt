@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.telusinternational.hrims.service.impl.InterviewScheduleServiceImplTest
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.015 s -- in com.telusinternational.hrims.service.impl.InterviewScheduleServiceImplTest

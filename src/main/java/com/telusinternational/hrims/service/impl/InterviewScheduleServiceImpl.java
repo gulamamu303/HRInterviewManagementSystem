@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -58,8 +59,17 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InterviewSchedule> getAllInterviews() {
+    public List<InterviewSchedule> getAllInterviews(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null) {
+            return getInterviewsByDateRange(startDate, endDate);
+        }
         return interviewScheduleRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<InterviewSchedule> getInterviewsByDateRange(LocalDate startDate, LocalDate endDate) {
+        return interviewScheduleRepository.findByCalendarInfo_DateBetween(startDate, endDate);
     }
 
     @Override
