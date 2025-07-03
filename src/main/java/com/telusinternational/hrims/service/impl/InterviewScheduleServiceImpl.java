@@ -8,8 +8,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.telusinternational.hrims.exception.InvalidDateRangeException;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -58,8 +60,25 @@ public class InterviewScheduleServiceImpl implements InterviewScheduleService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<InterviewSchedule> getAllInterviews() {
-        return interviewScheduleRepository.findAll();
+    public List<InterviewSchedule> getAllInterviews(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null) {
+            if (endDate.isBefore(startDate) || endDate.isEqual(startDate)) {
+                throw new InvalidDateRangeException("Invalid input- End Date should be grater than start date");
+            }
+            return interviewScheduleRepository.findByCalendarInfo_DateBetween(startDate, endDate);
+        } else if (startDate != null) {
+            // If only startDate is provided, fetch from startDate onwards (or treat as error/specific range)
+            // For now, let's assume we fetch all if one date is missing, as per relaxed requirement.
+            // Or, adjust repository method: findByCalendarInfo_DateGreaterThanEqual(startDate)
+            return interviewScheduleRepository.findAll(); // Current behavior: all if one is missing
+        } else if (endDate != null) {
+            // If only endDate is provided, fetch up to endDate (or treat as error/specific range)
+            // For now, let's assume we fetch all if one date is missing.
+            // Or, adjust repository method: findByCalendarInfo_DateLessThanEqual(endDate)
+            return interviewScheduleRepository.findAll(); // Current behavior: all if one is missing
+        } else {
+            return interviewScheduleRepository.findAll();
+        }
     }
 
     @Override

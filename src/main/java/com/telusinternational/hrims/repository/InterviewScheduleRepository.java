@@ -9,4 +9,5 @@ import java.util.List;
 @Repository
 public interface InterviewScheduleRepository extends JpaRepository<InterviewSchedule, Long> {
     List<InterviewSchedule> findByCalendarInfo_Date(LocalDate date);
+    List<InterviewSchedule> findByCalendarInfo_DateBetween(LocalDate startDate, LocalDate endDate);
 } 
